@@ -1,5 +1,6 @@
 /* Shop page: search + filters + sort, synced to the URL */
 SR.onReady(function () {
+  var t = SR.t;
   var S = {
     q: SR.param("q") || "",
     type: SR.param("type") || "all",
@@ -19,7 +20,10 @@ SR.onReady(function () {
   $q.value = S.q; $sort.value = S.sort; $min.value = S.min; $max.value = S.max;
   SR.$("#f-live").checked = S.live; SR.$("#f-gi").checked = S.gi; SR.$("#f-sale").checked = S.sale;
 
-  function stateOf(p) { return p.craft ? p.craft.state.split("/")[0].trim() : ""; }
+  /* craft state: English value (stable in URLs), localized label */
+  function stateOf(p) { return p.craft ? p.craft.state_en.split("/")[0].trim() : ""; }
+  var stateLabel = {};
+  SR.products.forEach(function (p) { if (p.craft) stateLabel[stateOf(p)] = p.craft.state.split("/")[0].trim(); });
   function minPrice(p) { return Math.min.apply(null, p.variants.map(function (v) { return v.price; })); }
   function maxOff(p) { return Math.max.apply(null, p.variants.map(function (v) { return SR.off(v.price, v.mrp); })); }
 
@@ -43,7 +47,7 @@ SR.onReady(function () {
       "price-asc": function (a, b) { return minPrice(a.p) - minPrice(b.p); },
       "price-desc": function (a, b) { return minPrice(b.p) - minPrice(a.p); },
       discount: function (a, b) { return maxOff(b.p) - maxOff(a.p); },
-      name: function (a, b) { return a.p.name.localeCompare(b.p.name); }
+      name: function (a, b) { return a.p.name.localeCompare(b.p.name, SR.isHi ? "hi" : "en"); }
     };
     if (sorters[S.sort]) res.sort(sorters[S.sort]);
     else if (!S.q) res.sort(function (a, b) { return (b.p.featured ? 1 : 0) - (a.p.featured ? 1 : 0); });
@@ -62,8 +66,8 @@ SR.onReady(function () {
     SR.products.forEach(function (p) { var s = stateOf(p); if (s) states[s] = (states[s] || 0) + 1; });
     var showStates = S.type !== "organic";
     SR.$("#state-wrap").classList.toggle("hidden", !showStates);
-    SR.$("#state-list").innerHTML = Object.keys(states).sort().map(function (s) {
-      return '<li><label><input type="checkbox" value="' + SR.esc(s) + '"' + (S.states.indexOf(s) > -1 ? " checked" : "") + "> " + SR.esc(s) + '<span class="count">' + states[s] + "</span></label></li>";
+    SR.$("#state-list").innerHTML = Object.keys(states).sort(function (a, b) { return stateLabel[a].localeCompare(stateLabel[b]); }).map(function (s) {
+      return '<li><label><input type="checkbox" value="' + SR.esc(s) + '"' + (S.states.indexOf(s) > -1 ? " checked" : "") + "> " + SR.esc(stateLabel[s]) + '<span class="count">' + states[s] + "</span></label></li>";
     }).join("");
   }
 
@@ -71,12 +75,12 @@ SR.onReady(function () {
     var chips = [];
     if (S.q) chips.push(["q", "“" + S.q + "”"]);
     S.cats.forEach(function (c) { chips.push(["cat:" + c, (SR.catByKey[c] || {}).name || c]); });
-    S.states.forEach(function (s) { chips.push(["state:" + s, s]); });
-    if (S.min) chips.push(["min", "Min " + SR.fmt(S.min)]);
-    if (S.max) chips.push(["max", "Max " + SR.fmt(S.max)]);
-    if (S.live) chips.push(["live", "ICAR-NISA live"]);
-    if (S.gi) chips.push(["gi", "GI craft"]);
-    if (S.sale) chips.push(["sale", "On offer"]);
+    S.states.forEach(function (s) { chips.push(["state:" + s, stateLabel[s] || s]); });
+    if (S.min) chips.push(["min", t("shop.min", { amt: SR.fmt(S.min) })]);
+    if (S.max) chips.push(["max", t("shop.max", { amt: SR.fmt(S.max) })]);
+    if (S.live) chips.push(["live", t("shop.chipLive")]);
+    if (S.gi) chips.push(["gi", t("badge.gi")]);
+    if (S.sale) chips.push(["sale", t("shop.chipSale")]);
     SR.$("#active-filters").innerHTML = chips.map(function (c) {
       return '<button class="chip" type="button" data-rm="' + SR.esc(c[0]) + '">' + SR.esc(c[1]) + " ✕</button>";
     }).join("");
@@ -99,32 +103,32 @@ SR.onReady(function () {
   }
 
   function titles() {
-    var t = "All products", sub = "Organic products from Indian farms and forests, tested with ICAR-NISA, and handicrafts from Indian MSMEs.", crumb = "Shop";
+    var title = t("shop.allTitle"), sub = t("shop.allSub"), crumb = t("shop.crumb");
     if (S.cats.length === 1 && SR.catByKey[S.cats[0]]) {
       var c = SR.catByKey[S.cats[0]];
-      t = c.name + ' <span class="deva" style="color:var(--saffron-dark);font-size:.7em">' + SR.esc(c.hi) + "</span>"; sub = c.desc; crumb = c.type === "organic" ? "Organic" : "Handicrafts";
-    } else if (S.type === "organic") { t = "Organic range"; sub = "Kapoor, dhoop and sacred resins, puja essentials, home shuddhi, 17 single-flower honeys, bee products, edible gums, salts, hing and A2 ghee. Each one has an ICAR-NISA certification placeholder."; crumb = "Organic"; }
-    else if (S.type === "handicraft") { t = "Indian handicrafts"; sub = "Minakari, marble, wooden, glass, mitti, iron, chini mitti and bamboo, handmade by MSME artisans across India."; crumb = "Handicrafts"; }
-    SR.$("#shop-title").innerHTML = t;
+      title = SR.esc(c.name) + ' <span class="deva" style="color:var(--saffron-dark);font-size:.7em" lang="' + (SR.isHi ? "en" : "hi") + '">' + SR.esc(c.alt) + "</span>"; sub = c.desc; crumb = c.type === "organic" ? t("nav.organic") : t("nav.handicrafts");
+    } else if (S.type === "organic") { title = t("shop.orgTitle"); sub = t("shop.orgSub"); crumb = t("nav.organic"); }
+    else if (S.type === "handicraft") { title = t("shop.hcTitle"); sub = t("shop.hcSub"); crumb = t("nav.handicrafts"); }
+    SR.$("#shop-title").innerHTML = title;
     SR.$("#shop-sub").textContent = sub;
     SR.$("#crumb-type").textContent = crumb;
-    document.title = (S.q ? "“" + S.q + "” · " : "") + crumb + " | Shubharambh";
+    document.title = (S.q ? "“" + S.q + "” · " : "") + crumb + " | " + t("brand.name");
   }
 
   function render() {
     renderFacets(); renderChips(); titles(); syncURL();
     var res = apply();
     SR.$("#grid").innerHTML = res.map(function (r) { return SR.card(r.p, S.q); }).join("");
-    SR.$("#result-meta").textContent = res.length + (res.length === 1 ? " product" : " products") + (S.q ? " for “" + S.q + "”" : "");
+    SR.$("#result-meta").textContent = (res.length === 1 ? t("shop.count1") : t("shop.countN", { n: res.length })) + (S.q ? " " + t("shop.forQ", { q: S.q }) : "");
     SR.$("#empty").classList.toggle("hidden", res.length > 0);
     if (!res.length) {
-      var sugg = ["kapoor", "honey", "guggul", "roli", "bangles", "marble", "bamboo", "gift"];
+      var sugg = SR.isHi ? ["कपूर", "शहद", "गुग्गुल", "रोली", "चूड़ियाँ", "संगमरमर", "बाँस", "उपहार"] : ["kapoor", "honey", "guggul", "roli", "bangles", "marble", "bamboo", "gift"];
       SR.$("#empty-sugg").innerHTML = sugg.map(function (s) { return '<button class="chip" type="button" data-sugg="' + s + '">' + s + "</button>"; }).join("");
     }
   }
 
   var tmr;
-  $q.addEventListener("input", function () { clearTimeout(tmr); tmr = setTimeout(function () { S.q = $q.value.trim(); if (S.q && S.sort === "relevance") $sort.value = "relevance"; render(); }, 160); });
+  $q.addEventListener("input", function () { clearTimeout(tmr); tmr = setTimeout(function () { S.q = $q.value.trim(); render(); }, 160); });
   $sort.addEventListener("change", function () { S.sort = $sort.value; render(); });
   $min.addEventListener("change", function () { S.min = $min.value; render(); });
   $max.addEventListener("change", function () { S.max = $max.value; render(); });

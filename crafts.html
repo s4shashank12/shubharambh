@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>try{if(/[?&]lang=hi/.test(location.search)||(!/[?&]lang=en/.test(location.search)&&JSON.parse(localStorage.getItem("sr_lang")||'"en"')==="hi")){document.documentElement.className+=" lang-hi i18n-wait";document.documentElement.lang="hi";setTimeout(function(){document.documentElement.classList.remove("i18n-wait")},2500)}}catch(e){}</script>
   <title>Craft Map of India | Shubharambh</title>
   <meta name="description" content="Indian handicrafts on Shubharambh: minakari, marble, wooden, glass, mitti, iron, chini mitti and bamboo, from MSME clusters across India. Gifting for weddings, festivals and corporate occasions.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,37 +59,42 @@
   </main>
   <div id="site-footer"></div>
   <script src="assets/js/data-organic.js"></script>
+  <script src="assets/js/data-organic.hi.js"></script>
   <script src="assets/js/data-honey.js"></script>
   <script src="assets/js/data-crafts.js"></script>
+  <script src="assets/js/data-crafts.hi.js"></script>
   <script src="assets/js/images.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/i18n-static.js"></script>
   <script src="assets/js/app.js"></script>
   <script>
     SR.onReady(function () {
+      var L = SR.L, t = SR.t;
       var MAP = [
-        ["Rajasthan", "Marble (Makrana), meenakari, blue pottery, iron tawa", true, "marble"],
-        ["Uttar Pradesh", "Firozabad glass, Khurja pottery, Saharanpur wood, Agra inlay, Moradabad metal, Hathras hing", true, "glass"],
-        ["Gujarat", "Meenakari, torans, matkas of Kutch", false, "minakari"],
-        ["Jharkhand", "Dokra metal casting; sal-resin dhuwan and forest honey", false, "dhoop"],
-        ["Bihar", "Madhubani painting (GI-tagged); litchi honey of Muzaffarpur", false, "honey"],
-        ["West Bengal", "Bankura terracotta horses (GI), bamboo pankha; Sundarbans honey", true, "mitti"],
-        ["Chhattisgarh", "Bastar wrought iron (GI), Dokra", true, "iron"],
-        ["Karnataka", "Channapatna lacquer toys (GI); coffee-blossom honey", true, "wooden"],
-        ["Andhra Pradesh", "Kondapalli toys (GI)", true, "wooden"],
-        ["Tamil Nadu", "Thanjavur glass painting; herbal fragrances, sambrani", false, "glass"],
-        ["Assam & Tripura", "Bamboo & cane baskets, lamps, bottles", false, "bamboo"],
-        ["Odisha", "Dokra, karanj & forest honey", false, "honey"]
+        [["Rajasthan", "राजस्थान"], ["Marble (Makrana), meenakari, blue pottery, iron tawa", "संगमरमर (मकराना), मीनाकारी, ब्लू पॉटरी, लोहे का तवा"], true, "marble"],
+        [["Uttar Pradesh", "उत्तर प्रदेश"], ["Firozabad glass, Khurja pottery, Saharanpur wood, Agra inlay, Moradabad metal, Hathras hing", "फ़िरोज़ाबाद का काँच, खुर्जा की पॉटरी, सहारनपुर की लकड़ी, आगरा की पच्चीकारी, मुरादाबाद की धातु, हाथरस की हींग"], true, "glass"],
+        [["Gujarat", "गुजरात"], ["Meenakari, torans, matkas of Kutch", "मीनाकारी, तोरण, कच्छ के मटके"], false, "minakari"],
+        [["Jharkhand", "झारखंड"], ["Dokra metal casting; sal-resin dhuwan and forest honey", "डोकरा धातु ढलाई; साल की राल का धुवन और जंगली शहद"], false, "dhoop"],
+        [["Bihar", "बिहार"], ["Madhubani painting (GI-tagged); litchi honey of Muzaffarpur", "मधुबनी चित्रकला (GI टैग); मुज़फ़्फ़रपुर का लीची शहद"], false, "honey"],
+        [["West Bengal", "पश्चिम बंगाल"], ["Bankura terracotta horses (GI), bamboo pankha; Sundarbans honey", "बांकुड़ा के टेराकोटा घोड़े (GI), बाँस का पंखा; सुंदरबन का शहद"], true, "mitti"],
+        [["Chhattisgarh", "छत्तीसगढ़"], ["Bastar wrought iron (GI), Dokra", "बस्तर का लौह शिल्प (GI), डोकरा"], true, "iron"],
+        [["Karnataka", "कर्नाटक"], ["Channapatna lacquer toys (GI); coffee-blossom honey", "चन्नपटना के लाख वाले खिलौने (GI); कॉफ़ी फूल का शहद"], true, "wooden"],
+        [["Andhra Pradesh", "आंध्र प्रदेश"], ["Kondapalli toys (GI)", "कोंडापल्ली खिलौने (GI)"], true, "wooden"],
+        [["Tamil Nadu", "तमिलनाडु"], ["Thanjavur glass painting; herbal fragrances, sambrani", "तंजावुर काँच चित्रकला; जड़ी-बूटियों की सुगंध, साम्ब्राणी"], false, "glass"],
+        [["Assam & Tripura", "असम और त्रिपुरा"], ["Bamboo & cane baskets, lamps, bottles", "बाँस और बेंत की टोकरियाँ, लैम्प, बोतलें"], false, "bamboo"],
+        [["Odisha", "ओडिशा"], ["Dokra, karanj & forest honey", "डोकरा, करंज और जंगली शहद"], false, "honey"]
       ];
       SR.$("#craft-map").innerHTML = MAP.map(function (m) {
-        return '<a class="craft-pin" href="products.html?cat=' + m[3] + '" style="text-decoration:none;color:inherit"><b>' + m[0] + "</b><span>" + m[1] + "</span>" + (m[2] ? '<br><span class="badge badge-maroon">Has GI-tagged crafts in our range</span>' : "") + "</a>";
-      }).join("") + '<div class="craft-pin" style="background:var(--haldi-soft)"><b>Coming soon</b><span>Madhubani, Dokra, Gujarat torans, Moradabad brass and more. About 20–30 craft types are being launched in phases.</span></div>';
+        return '<a class="craft-pin" href="products.html?cat=' + m[3] + '" style="text-decoration:none;color:inherit"><b>' + L(m[0][0], m[0][1]) + "</b><span>" + L(m[1][0], m[1][1]) + "</span>" + (m[2] ? '<br><span class="badge badge-maroon">' + t("crafts.hasGi") + "</span>" : "") + "</a>";
+      }).join("") + '<div class="craft-pin" style="background:var(--haldi-soft)"><b>' + t("crafts.soon") + "</b><span>" + t("crafts.soonMsg") + "</span></div>";
       SR.$("#craft-cats").innerHTML = SR.categories.filter(function (c) { return c.type === "handicraft"; }).map(function (c) {
         var n = SR.products.filter(function (p) { return p.cat === c.key; }).length;
-        return '<a class="cat-tile" href="products.html?cat=' + c.key + '"><img src="' + SR.esc(SR.catImg(c.key)) + '" alt="" loading="lazy"><span class="cat-label"><b>' + SR.esc(c.name) + ' <span class="deva" style="font-size:.85em;color:#ffd98a">' + SR.esc(c.hi) + "</span></b><span>" + n + " items · " + SR.esc(c.desc) + "</span></span></a>";
+        return '<a class="cat-tile" href="products.html?cat=' + c.key + '"><img src="' + SR.esc(SR.catImg(c.key)) + '" alt="" loading="lazy"><span class="cat-label"><b>' + SR.esc(c.name) + ' <span class="deva" style="font-size:.85em;color:#ffd98a">' + SR.esc(c.alt) + "</span></b><span>" + t("crafts.nItems", { n: n }) + " · " + SR.esc(c.desc) + "</span></span></a>";
       }).join("");
       var GIFTS = [
-        ["Wedding & anniversary", ["samai-hathi-meenakari", "meenakari-jewellery-box", "pietra-dura-plate", "firozabad-bangles"]],
-        ["Griha pravesh", ["marble-ganesha", "wooden-home-mandir", "clay-matka", "terracotta-diyas"]],
-        ["Corporate gifting", ["marble-coaster-set", "bamboo-bottle", "bastar-iron-figurine", "khurja-chai-cups"]]
+        [t("crafts.giftWedding"), ["samai-hathi-meenakari", "meenakari-jewellery-box", "pietra-dura-plate", "firozabad-bangles"]],
+        [t("crafts.giftGriha"), ["marble-ganesha", "wooden-home-mandir", "clay-matka", "terracotta-diyas"]],
+        [t("crafts.giftCorp"), ["marble-coaster-set", "bamboo-bottle", "bastar-iron-figurine", "khurja-chai-cups"]]
       ];
       SR.$("#gift-grid").innerHTML = GIFTS.map(function (g) {
         return '<div class="card"><h3>' + g[0] + "</h3>" + g[1].map(function (id) {

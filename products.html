@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>try{if(/[?&]lang=hi/.test(location.search)||(!/[?&]lang=en/.test(location.search)&&JSON.parse(localStorage.getItem("sr_lang")||'"en"')==="hi")){document.documentElement.className+=" lang-hi i18n-wait";document.documentElement.lang="hi";setTimeout(function(){document.documentElement.classList.remove("i18n-wait")},2500)}}catch(e){}</script>
   <title>Shop | Shubharambh</title>
   <meta name="description" content="Search and shop Shubharambh's organic products (kapoor, dhoop, resins, honey, gums, salts, ghee) and Indian handicrafts (minakari, marble, wood, glass, terracotta, iron, ceramic, bamboo).">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,9 +54,9 @@
         </div>
         <h4>Assurance</h4>
         <ul class="filter-list">
-          <li><label><input type="checkbox" id="f-live"> ICAR-NISA certified (live)</label></li>
-          <li><label><input type="checkbox" id="f-gi"> GI-registered craft</label></li>
-          <li><label><input type="checkbox" id="f-sale"> On offer (below MRP)</label></li>
+          <li><label><input type="checkbox" id="f-live"> <span>ICAR-NISA certified (live)</span></label></li>
+          <li><label><input type="checkbox" id="f-gi"> <span>GI-registered craft</span></label></li>
+          <li><label><input type="checkbox" id="f-sale"> <span>On offer (below MRP)</span></label></li>
         </ul>
         <div id="state-wrap">
           <h4>Craft state</h4>
@@ -96,9 +97,13 @@
   <div id="site-footer"></div>
 
   <script src="assets/js/data-organic.js"></script>
+  <script src="assets/js/data-organic.hi.js"></script>
   <script src="assets/js/data-honey.js"></script>
   <script src="assets/js/data-crafts.js"></script>
+  <script src="assets/js/data-crafts.hi.js"></script>
   <script src="assets/js/images.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/i18n-static.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/pages/shop.js"></script>
 </body>

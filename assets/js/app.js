@@ -2,11 +2,62 @@
    Shubharambh — core app script (no build step, works from file://)
    Cart + orders live in localStorage. This is a SAMPLE store:
    no real payments, no real orders.
+   Language: English / Hindi (SR.lang), chosen in the header,
+   remembered in localStorage, overridable with ?lang=hi|en.
    ========================================================= */
 (function () {
   "use strict";
 
   var SR = (window.SR = window.SR || {});
+
+  /* ---------------- Storage (safe) ---------------- */
+  var mem = {};
+  function load(k, d) {
+    try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return mem[k] || d; }
+  }
+  function save(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { mem[k] = v; }
+  }
+  SR.load = load;
+  SR.save = save;
+
+  SR.param = function (k) {
+    try { return new URLSearchParams(location.search).get(k); } catch (e) { return null; }
+  };
+
+  /* ---------------- Language ---------------- */
+  var qLang = SR.param("lang");
+  if (qLang === "hi" || qLang === "en") save("sr_lang", qLang);
+  SR.lang = load("sr_lang", "en") === "hi" ? "hi" : "en";
+  SR.isHi = SR.lang === "hi";
+  document.documentElement.lang = SR.lang;
+  document.documentElement.classList.toggle("lang-hi", SR.isHi);
+
+  var UI = window.SR_UI || {};
+  SR._missing = {};
+  /* t("key", {name: "x"}) → localized UI string with {placeholders} filled */
+  SR.t = function (key, vars) {
+    var e = UI[key], s;
+    if (!e) { SR._missing[key] = 1; s = key; }
+    else s = SR.isHi && e[1] != null ? e[1] : e[0];
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; });
+    return s;
+  };
+  /* L(en, hi) → pick inline pair */
+  SR.L = function (en, hi) { return SR.isHi && hi != null ? hi : en; };
+  SR.setLang = function (lang) {
+    save("sr_lang", lang);
+    try { sessionStorage.setItem("sr_scroll", JSON.stringify({ p: location.pathname, y: window.scrollY })); } catch (e) { /* ignore */ }
+    var u = location.href.replace(/([?&])lang=(hi|en)(&|$)/, function (m, a, b, c) { return c ? a : ""; });
+    if (u === location.href) location.reload(); else location.href = u;
+  };
+  /* translate unit words inside variant labels (e.g. "50 g" → "50 ग्राम") */
+  SR.unitsHi = function (s) {
+    if (!SR.isHi) return s;
+    var map = window.SR_UNITS_HI || [];
+    map.forEach(function (m) { s = s.replace(m[0], m[1]); });
+    return s;
+  };
 
   /* ---------------- Config ---------------- */
   SR.cfg = {
@@ -14,38 +65,72 @@
     shipFee: 79,
     codFee: 40,
     coupons: {
-      SHUBH10: { type: "pct", value: 10, label: "10% off on your order" },
-      PRAKRITI15: { type: "pct", value: 15, min: 1499, label: "15% off on orders above ₹1,499" },
-      NEWBEGIN: { type: "flat", value: 100, min: 799, label: "₹100 off on orders above ₹799" }
+      SHUBH10: { type: "pct", value: 10, min: 0 },
+      PRAKRITI15: { type: "pct", value: 15, min: 1499 },
+      NEWBEGIN: { type: "flat", value: 100, min: 799 }
     }
+  };
+  SR.couponLabel = function (code) {
+    return SR.t("coupon." + code);
   };
 
   /* ---------------- Categories ---------------- */
   SR.categories = [
-    { key: "kapoor", type: "organic", name: "Kapoor & Camphor", hi: "कपूर", img: "bhimseni-kapoor", desc: "Bhimseni and tikia kapoor, and kapur-gugal blends, all free of naphthalene." },
-    { key: "dhoop", type: "organic", name: "Dhoop & Sacred Resins", hi: "धूप एवं राल", img: "dhuwan", desc: "Guggul, sambrani, loban, sal-resin dhuwan, cones and bambooless sticks" },
-    { key: "puja", type: "organic", name: "Puja Essentials", hi: "पूजन सामग्री", img: "roli", desc: "Haldi-ashtagandh and roli made from turmeric with lime, without synthetic dye" },
-    { key: "shuddhi", type: "organic", name: "Home Shuddhi", hi: "गृह शुद्धि", img: "kapoor-freshener", desc: "Flavoured Bhimseni fresheners and gaumutra vaporizers to replace naphthalene and chemical sprays" },
-    { key: "honey", type: "organic", name: "Monofloral Honey", hi: "शहद", img: "honey-generic", desc: "17 single-flower honeys, each identified by pollen analysis" },
-    { key: "bee", type: "organic", name: "Bee Products", hi: "मधुमक्खी उत्पाद", img: "beepolyn", desc: "Bee pollen and pure beeswax, by-products that add to beekeepers' income" },
-    { key: "gond", type: "organic", name: "Edible Gums", hi: "गोंद", img: "gond-katira", desc: "Gond katira and dhawda gond, the cooling and strengthening gums of Indian kitchens" },
-    { key: "rasoi", type: "organic", name: "Rasoi: Salt, Hing & Ghee", hi: "रसोई", img: "sendha-namak", desc: "Sendha namak, kala namak, pure hing and A2 bilona ghee" },
-    { key: "minakari", type: "handicraft", name: "Minakari", hi: "मीनाकारी", img: "hc-minakari-elephant", desc: "Enamel and stone work on metal: samai hathi, boxes and thalis" },
-    { key: "marble", type: "handicraft", name: "Marble", hi: "संगमरमर", img: "hc-marble-inlay", desc: "Makrana marble and Agra pietra-dura inlay" },
-    { key: "wooden", type: "handicraft", name: "Wooden", hi: "लकड़ी", img: "hc-wooden-channapatna", desc: "Channapatna toys, Saharanpur carving and sheesham mandirs" },
-    { key: "glass", type: "handicraft", name: "Glass", hi: "काँच", img: "hc-glass-bangles", desc: "Firozabad bangles, glass diyas, mosaic lamps and reverse glass painting" },
-    { key: "mitti", type: "handicraft", name: "Mitti (Terracotta)", hi: "मिट्टी", img: "hc-mitti-diya", desc: "Diyas, kulhads, matkas and Bankura horses" },
-    { key: "iron", type: "handicraft", name: "Iron", hi: "लोहा", img: "hc-iron-bastar", desc: "Bastar wrought iron, plus cast-iron kadhai and tawa" },
-    { key: "chini", type: "handicraft", name: "Chini Mitti (Ceramic)", hi: "चीनी मिट्टी", img: "hc-chini-bluepottery", desc: "Khurja achaar barni, Jaipur blue pottery and glazed cups" },
-    { key: "bamboo", type: "handicraft", name: "Bamboo", hi: "बाँस", img: "hc-bamboo-basket", desc: "Bamboo baskets, lamps, pankhas and bottles from the Northeast" }
+    { key: "kapoor", type: "organic", name: "Kapoor & Camphor", hi: "कपूर", desc: "Bhimseni and tikia kapoor, and kapur-gugal blends, all free of naphthalene." },
+    { key: "dhoop", type: "organic", name: "Dhoop & Sacred Resins", hi: "धूप एवं राल", desc: "Guggul, sambrani, loban, sal-resin dhuwan, cones and bambooless sticks" },
+    { key: "puja", type: "organic", name: "Puja Essentials", hi: "पूजन सामग्री", desc: "Haldi-ashtagandh and roli made from turmeric with lime, without synthetic dye" },
+    { key: "shuddhi", type: "organic", name: "Home Shuddhi", hi: "गृह शुद्धि", desc: "Flavoured Bhimseni fresheners and gaumutra vaporizers to replace naphthalene and chemical sprays" },
+    { key: "honey", type: "organic", name: "Monofloral Honey", hi: "एकपुष्पी शहद", desc: "17 single-flower honeys, each identified by pollen analysis" },
+    { key: "bee", type: "organic", name: "Bee Products", hi: "मधुमक्खी उत्पाद", desc: "Bee pollen and pure beeswax, by-products that add to beekeepers' income" },
+    { key: "gond", type: "organic", name: "Edible Gums", hi: "खाने योग्य गोंद", desc: "Gond katira and dhawda gond, the cooling and strengthening gums of Indian kitchens" },
+    { key: "rasoi", type: "organic", name: "Rasoi: Salt, Hing & Ghee", hi: "रसोई: नमक, हींग और घी", desc: "Sendha namak, kala namak, pure hing and A2 bilona ghee" },
+    { key: "minakari", type: "handicraft", name: "Minakari", hi: "मीनाकारी", desc: "Enamel and stone work on metal: samai hathi, boxes and thalis" },
+    { key: "marble", type: "handicraft", name: "Marble", hi: "संगमरमर", desc: "Makrana marble and Agra pietra-dura inlay" },
+    { key: "wooden", type: "handicraft", name: "Wooden", hi: "लकड़ी", desc: "Channapatna toys, Saharanpur carving and sheesham mandirs" },
+    { key: "glass", type: "handicraft", name: "Glass", hi: "काँच", desc: "Firozabad bangles, glass diyas, mosaic lamps and reverse glass painting" },
+    { key: "mitti", type: "handicraft", name: "Mitti (Terracotta)", hi: "मिट्टी (टेराकोटा)", desc: "Diyas, kulhads, matkas and Bankura horses" },
+    { key: "iron", type: "handicraft", name: "Iron", hi: "लोहा", desc: "Bastar wrought iron, plus cast-iron kadhai and tawa" },
+    { key: "chini", type: "handicraft", name: "Chini Mitti (Ceramic)", hi: "चीनी मिट्टी (सिरेमिक)", desc: "Khurja achaar barni, Jaipur blue pottery and glazed cups" },
+    { key: "bamboo", type: "handicraft", name: "Bamboo", hi: "बाँस", desc: "Bamboo baskets, lamps, pankhas and bottles from the Northeast" }
   ];
+  var CAT_HI = window.SR_CAT_DESC_HI || {};
   SR.catByKey = {};
-  SR.categories.forEach(function (c) { SR.catByKey[c.key] = c; });
+  SR.categories.forEach(function (c) {
+    c.name_en = c.name;
+    if (SR.isHi) { c.name = c.hi; c.alt = c.name_en; if (CAT_HI[c.key]) c.desc = CAT_HI[c.key]; }
+    else c.alt = c.hi;
+    SR.catByKey[c.key] = c;
+  });
 
-  /* ---------------- Products ---------------- */
+  /* ---------------- Products (+ Hindi overlay) ---------------- */
   SR.products = (window.SR_PRODUCTS || []).slice();
+  var HIP = window.SR_HI_PRODUCTS || {};
+  function overlay(p, o) {
+    Object.keys(o).forEach(function (k) {
+      var v = o[k];
+      if (k === "name") { p.name_hi = v; return; }
+      if (k === "variants") { v.forEach(function (lab, i) { if (p.variants[i] && lab) p.variants[i].label = lab; }); }
+      else if ((k === "nisa" || k === "craft" || k === "honey") && p[k] && v && typeof v === "object" && !Array.isArray(v)) {
+        p[k] = Object.assign({}, p[k], v);
+      } else p[k] = v;
+    });
+  }
   SR.byId = {};
-  SR.products.forEach(function (p) { SR.byId[p.id] = p; });
+  SR.products.forEach(function (p) {
+    p.name_en = p.name;
+    p.name_hi = p.hi || p.name;
+    p.short_en = p.short;
+    if (p.craft) p.craft.state_en = p.craft.state;
+    p.variants.forEach(function (v) { v.label_en = v.label; });
+    if (SR.isHi) {
+      var o = HIP[p.id] || p.hiData;
+      if (o) overlay(p, o);
+      p.variants.forEach(function (v) { if (v.label === v.label_en) v.label = SR.unitsHi(v.label); });
+      p.name = p.name_hi;
+      p.alt = p.name_en;
+    } else p.alt = p.hi;
+    SR.byId[p.id] = p;
+  });
 
   /* ---------------- Helpers ---------------- */
   SR.esc = function (s) {
@@ -56,8 +141,8 @@
   SR.fmt = function (n) {
     return "₹" + Math.round(n).toLocaleString("en-IN");
   };
-  SR.param = function (k) {
-    try { return new URLSearchParams(location.search).get(k); } catch (e) { return null; }
+  SR.date = function (iso) {
+    return new Date(iso).toLocaleDateString(SR.isHi ? "hi-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
   };
   SR.off = function (price, mrp) {
     return mrp && mrp > price ? Math.round((1 - price / mrp) * 100) : 0;
@@ -81,17 +166,6 @@
     return arr.length ? arr[0].src : "assets/img/brand/placeholder.svg";
   };
 
-  /* ---------------- Storage (safe) ---------------- */
-  var mem = {};
-  function load(k, d) {
-    try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return mem[k] || d; }
-  }
-  function save(k, v) {
-    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { mem[k] = v; }
-  }
-  SR.load = load;
-  SR.save = save;
-
   /* ---------------- Cart ---------------- */
   var CART = "sr_cart_v1";
   SR.cart = {
@@ -108,7 +182,7 @@
       if (ex) ex.qty = Math.min(20, ex.qty + qty); else items.push({ id: id, v: v, qty: Math.min(20, qty) });
       SR.cart.set(items);
       var variant = p.variants[v];
-      SR.toast("Added <b>" + SR.esc(p.name) + "</b>" + (p.variants.length > 1 ? " (" + SR.esc(variant.label) + ")" : "") + " to cart", "cart.html", "View cart");
+      SR.toast(SR.t("toast.added", { name: "<b>" + SR.esc(p.name) + "</b>" + (p.variants.length > 1 ? " (" + SR.esc(variant.label) + ")" : "") }), "cart.html", SR.t("toast.viewCart"));
     },
     update: function (id, v, qty) {
       var items = SR.cart.items();
@@ -135,18 +209,18 @@
       var lines = SR.cart.lines();
       var sub = lines.reduce(function (s, l) { return s + l.total; }, 0);
       var mrp = lines.reduce(function (s, l) { return s + l.mrp * l.qty; }, 0);
-      var code = (opts.coupon !== undefined ? opts.coupon : SR.cart.coupon()) || "";
-      var cp = SR.cfg.coupons[code.toUpperCase()];
+      var code = ((opts.coupon !== undefined ? opts.coupon : SR.cart.coupon()) || "").toUpperCase();
+      var cp = SR.cfg.coupons[code];
       var disc = 0, couponMsg = "";
       if (cp) {
-        if (cp.min && sub < cp.min) couponMsg = "Add " + SR.fmt(cp.min - sub) + " more to use " + code.toUpperCase();
+        if (cp.min && sub < cp.min) couponMsg = SR.t("coupon.addMore", { amt: SR.fmt(cp.min - sub), code: code });
         else disc = cp.type === "pct" ? Math.round(sub * cp.value / 100) : cp.value;
       }
       var afterDisc = sub - disc;
       var ship = lines.length && afterDisc < SR.cfg.freeShipAt ? SR.cfg.shipFee : 0;
       var cod = opts.payment === "cod" && lines.length ? SR.cfg.codFee : 0;
       return {
-        lines: lines, sub: sub, mrp: mrp, savings: mrp - sub, disc: disc, code: cp && !couponMsg ? code.toUpperCase() : "",
+        lines: lines, sub: sub, mrp: mrp, savings: mrp - sub, disc: disc, code: cp && !couponMsg ? code : "",
         couponMsg: couponMsg, ship: ship, cod: cod, total: afterDisc + ship + cod
       };
     },
@@ -157,7 +231,7 @@
     }
   };
 
-  /* ---------------- Search ---------------- */
+  /* ---------------- Search (English + Hindi, typo tolerant) ---------------- */
   function norm(s) {
     return String(s || "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9ऀ-ॿ\s]/g, " ");
   }
@@ -172,14 +246,20 @@
     }
     return e + (a.length - i) + (b.length - j) <= 1;
   }
+  /* Hindi words searchable even in English mode (and vice versa) */
+  function hiExtra(p) {
+    var o = HIP[p.id] || p.hiData;
+    if (!o) return "";
+    return [o.short || "", o.craft ? (o.craft.state || "") + " " + (o.craft.cluster || "") : "", (SR.catByKey[p.cat] || {}).hi || ""].join(" ");
+  }
   function haystack(p) {
     if (p._hay) return p._hay;
     var c = SR.catByKey[p.cat] || {};
     p._hay = {
-      name: norm(p.name + " " + (p.hi || "")),
+      name: norm(p.name_en + " " + p.name_hi),
       aka: norm((p.aka || []).join(" ")),
-      cat: norm((c.name || "") + " " + (c.hi || "") + " " + p.type + (p.type === "handicraft" ? " handicrafts craft gift" : " organic natural")),
-      rest: norm([p.short, p.region, (p.tags || []).join(" "), p.craft ? p.craft.state + " " + p.craft.cluster + " " + p.craft.material : "", p.sku].join(" "))
+      cat: norm((c.name_en || "") + " " + (c.hi || "") + " " + p.type + (p.type === "handicraft" ? " handicrafts craft gift हस्तशिल्प उपहार" : " organic natural जैविक प्राकृतिक")),
+      rest: norm([p.short_en, p.short !== p.short_en ? p.short : "", hiExtra(p), p.region, (p.tags || []).join(" "), p.craft ? p.craft.state_en + " " + p.craft.state + " " + p.craft.cluster + " " + p.craft.material : "", p.sku].join(" "))
     };
     p._hay.words = (p._hay.name + " " + p._hay.aka + " " + p._hay.cat + " " + p._hay.rest).split(/\s+/).filter(Boolean);
     return p._hay;
@@ -221,6 +301,11 @@
   };
 
   /* ---------------- Icons ---------------- */
+  function sealSVG(top, bottom, inner) {
+    return '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"><circle cx="50" cy="50" r="46" stroke-width="3"/><circle cx="50" cy="50" r="38" stroke-width="1.5" stroke-dasharray="3 3"/>' + inner +
+      '<text x="50" y="22" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor" stroke="none" font-family="Mukta, sans-serif">' + top + "</text>" +
+      '<text x="50" y="86" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none" font-family="Mukta, sans-serif">' + bottom + "</text></svg>";
+  }
   var I = (SR.icons = {
     cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>',
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
@@ -232,20 +317,15 @@
     shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 4.5 3.2 8 7.5 9 4.3-1 7.5-4.5 7.5-9V6L12 3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
     hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4.5a1.5 1.5 0 0 1 3 0V12M14 11V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.6-2.2L3 16.5a1.6 1.6 0 0 1 2.4-2.1L8 16"/></svg>',
     truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg>',
-    qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></svg>',
-    wind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8"/></svg>',
-    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
-    users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.9.3 5 2.6 5 5.8"/></svg>',
     gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8S10.5 3 8 4s0 4 4 4ZM12 8s1.5-5 4-4 0 4-4 4Z"/></svg>',
     alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
     left: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 5-7 7 7 7"/></svg>',
     right: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>',
-    filter: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
-    seal: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"><circle cx="50" cy="50" r="46" stroke-width="3"/><circle cx="50" cy="50" r="38" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M33 51l11 11 23-25" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="50" y="22" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">ICAR-NISA</text><text x="50" y="86" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">QUALITY TESTED</text></svg>',
-    sealProgress: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"><circle cx="50" cy="50" r="46" stroke-width="3"/><circle cx="50" cy="50" r="38" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="50" cy="52" r="16" stroke-width="4"/><path d="M50 43v10l6 4" stroke-width="4" stroke-linecap="round"/><text x="50" y="22" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">ICAR-NISA</text><text x="50" y="86" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">IN PROGRESS</text></svg>',
-    sealCraft: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"><circle cx="50" cy="50" r="46" stroke-width="3"/><circle cx="50" cy="50" r="38" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M35 60c0-10 6-18 15-18s15 8 15 18M42 42l8-10 8 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><text x="50" y="22" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">HANDMADE</text><text x="50" y="86" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">MSME VERIFIED</text></svg>'
+    seal: sealSVG("ICAR-NISA", SR.t("seal.tested"), '<path d="M33 51l11 11 23-25" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'),
+    sealProgress: sealSVG("ICAR-NISA", SR.t("seal.progress"), '<circle cx="50" cy="52" r="16" stroke-width="4"/><path d="M50 43v10l6 4" stroke-width="4" stroke-linecap="round"/>'),
+    sealCraft: sealSVG(SR.t("seal.handmade"), SR.t("seal.msme"), '<path d="M35 60c0-10 6-18 15-18s15 8 15 18M42 42l8-10 8 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>')
   });
 
   SR.logo = function () {
@@ -272,53 +352,63 @@
     return '<svg viewBox="0 0 21 21" shape-rendering="crispEdges"><rect width="21" height="21" fill="#fff"/><g fill="#2b1d14">' + cells + "</g>" + finder(0, 0) + finder(14, 0) + finder(0, 14) + "</svg>";
   };
 
+  /* ---------------- Language switch ---------------- */
+  function langSwitchHTML(cls) {
+    return '<div class="lang-switch ' + (cls || "") + '" role="group" aria-label="' + SR.t("lang.label") + '">' +
+      '<button type="button" data-lang="en" lang="en" aria-pressed="' + !SR.isHi + '" title="English">EN</button>' +
+      '<button type="button" data-lang="hi" lang="hi" aria-pressed="' + SR.isHi + '" title="हिन्दी">हिं</button></div>';
+  }
+
   /* ---------------- Header / footer ---------------- */
   var NAV = [
-    ["index.html", "Home", "home"],
-    ["products.html?type=organic", "Organic", "organic"],
-    ["products.html?type=handicraft", "Handicrafts", "handicraft"],
-    ["purity.html", "Purity & ICAR-NISA", "purity"],
-    ["crafts.html", "Craft Map", "crafts"],
-    ["about.html", "Our Story", "about"]
+    ["index.html", "nav.home", "home"],
+    ["products.html?type=organic", "nav.organic", "organic"],
+    ["products.html?type=handicraft", "nav.handicrafts", "handicraft"],
+    ["purity.html", "nav.purity", "purity"],
+    ["crafts.html", "nav.crafts", "crafts"],
+    ["about.html", "nav.about", "about"]
   ];
   function headerHTML(active) {
     var nav = NAV.map(function (n) {
-      return '<a href="' + n[0] + '"' + (n[2] === active ? ' class="active" aria-current="page"' : "") + ">" + n[1] + "</a>";
+      return '<a href="' + n[0] + '"' + (n[2] === active ? ' class="active" aria-current="page"' : "") + ">" + SR.t(n[1]) + "</a>";
     }).join("");
     var search = '<form class="header-search" role="search" action="products.html" autocomplete="off">' +
-      '<label class="sr-only" for="hs-q">Search products</label>' +
-      '<input id="hs-q" name="q" type="search" placeholder="Search kapoor, honey, minakari…" aria-autocomplete="list">' +
-      '<button type="submit" aria-label="Search">' + I.search.replace("<svg", '<svg width="18" height="18"') + "</button>" +
+      '<label class="sr-only" for="hs-q">' + SR.t("search.label") + "</label>" +
+      '<input id="hs-q" name="q" type="search" placeholder="' + SR.t("search.ph") + '" aria-autocomplete="list">' +
+      '<button type="submit" aria-label="' + SR.t("search.btn") + '">' + I.search.replace("<svg", '<svg width="18" height="18"') + "</button>" +
       '<div class="suggest hidden" role="listbox"></div></form>';
-    return '<div class="sample-strip"><b>Sample prototype.</b> Not a live store; orders and payments are simulated, and certificates are placeholders.</div>' +
-      '<header class="site-header"><div class="wrap header-row">' +
-      '<a class="brand" href="index.html" aria-label="Shubharambh home">' + SR.logo() +
+    return '<div class="sample-strip" data-noi18n>' + SR.t("strip") + "</div>" +
+      '<header class="site-header" data-noi18n><div class="wrap header-row">' +
+      '<a class="brand" href="index.html" aria-label="' + SR.t("brand.home") + '">' + SR.logo() +
       '<span class="brand-text"><span class="hi">शुभारंभ</span><span class="en">SHUBHARAMBH</span></span></a>' +
       '<nav class="main-nav" aria-label="Main">' + nav + "</nav>" + search +
-      '<div class="header-icons">' +
-      '<a class="icon-btn" href="orders.html" aria-label="My orders" title="My orders">' + I.bag + "</a>" +
-      '<a class="icon-btn" href="cart.html" aria-label="Cart" title="Cart">' + I.cart + '<span class="cart-count"></span></a>' +
-      '<button class="icon-btn menu-toggle" aria-label="Menu" aria-expanded="false">' + I.menu + "</button>" +
+      '<div class="header-icons">' + langSwitchHTML() +
+      '<a class="icon-btn orders-icon" href="orders.html" aria-label="' + SR.t("nav.orders") + '" title="' + SR.t("nav.orders") + '">' + I.bag + "</a>" +
+      '<a class="icon-btn" href="cart.html" aria-label="' + SR.t("nav.cart") + '" title="' + SR.t("nav.cart") + '">' + I.cart + '<span class="cart-count"></span></a>' +
+      '<button class="icon-btn menu-toggle" aria-label="' + SR.t("nav.menu") + '" aria-expanded="false">' + I.menu + "</button>" +
       "</div></div>" +
-      '<nav class="mobile-nav" aria-label="Mobile">' + search.replace(/hs-q/g, "hs-q2") + nav + '<a href="cart.html">Cart</a><a href="orders.html">My orders</a></nav>' +
+      '<nav class="mobile-nav" aria-label="Mobile">' + search.replace(/hs-q/g, "hs-q2") + nav + '<a href="cart.html">' + SR.t("nav.cart") + '</a><a href="orders.html">' + SR.t("nav.orders") + "</a>" +
+      '<div class="mobile-lang"><span>' + SR.t("lang.label") + "</span>" + langSwitchHTML() + "</div></nav>" +
       "</header>";
   }
   function footerHTML() {
     var org = SR.categories.filter(function (c) { return c.type === "organic"; });
     var hc = SR.categories.filter(function (c) { return c.type === "handicraft"; });
-    function li(c) { return '<li><a href="products.html?cat=' + c.key + '">' + c.name + "</a></li>"; }
-    return '<footer class="site-footer"><div class="wrap"><div class="foot-grid">' +
+    function li(c) { return '<li><a href="products.html?cat=' + c.key + '">' + SR.esc(c.name) + "</a></li>"; }
+    var more = [["about.html", "foot.mission"], ["purity.html", "foot.howTested"], ["purity.html#home-tests", "foot.homeChecks"], ["crafts.html", "foot.craftMap"], ["products.html", "foot.shopAll"], ["orders.html", "nav.orders"], ["credits.html", "foot.credits"]];
+    return '<footer class="site-footer" data-noi18n><div class="wrap"><div class="foot-grid">' +
       '<div class="foot-brand"><a class="brand" href="index.html">' + SR.logo() + '<span class="brand-text"><span class="hi">शुभारंभ</span><span class="en">SHUBHARAMBH</span></span></a>' +
-      '<p style="margin-top:14px">“Phir se shuruaat”, a new beginning. We bring back the natural, original things Indian households have forgotten, alongside handmade crafts from India\'s MSME clusters.</p>' +
-      '<p class="small">Quality &amp; testing partner: <b>ICAR–National Institute of Secondary Agriculture (NISA)</b>, Namkum, Ranchi, under an MOU (see <a href="purity.html">Purity &amp; ICAR-NISA</a>).</p></div>' +
-      "<div><h4>Organic</h4><ul>" + org.map(li).join("") + "</ul></div>" +
-      "<div><h4>Handicrafts</h4><ul>" + hc.map(li).join("") + "</ul></div>" +
-      '<div><h4>Know more</h4><ul><li><a href="about.html">Mission &amp; vision</a></li><li><a href="purity.html">How purity is tested</a></li><li><a href="purity.html#home-tests">Home purity checks</a></li><li><a href="crafts.html">Craft map of India</a></li><li><a href="products.html">Shop all products</a></li><li><a href="orders.html">My orders</a></li><li><a href="credits.html">Image credits</a></li></ul></div>' +
+      '<p style="margin-top:14px">' + SR.t("foot.about") + "</p>" +
+      '<p class="small">' + SR.t("foot.partner") + "</p>" +
+      '<div class="foot-lang"><span>' + SR.t("lang.label") + "</span>" + langSwitchHTML("dark") + "</div></div>" +
+      "<div><h4>" + SR.t("nav.organic") + "</h4><ul>" + org.map(li).join("") + "</ul></div>" +
+      "<div><h4>" + SR.t("nav.handicrafts") + "</h4><ul>" + hc.map(li).join("") + "</ul></div>" +
+      "<div><h4>" + SR.t("foot.knowMore") + "</h4><ul>" + more.map(function (m) { return '<li><a href="' + m[0] + '">' + SR.t(m[1]) + "</a></li>"; }).join("") + "</ul></div>" +
       "</div>" +
-      '<p class="disclaimer">Traditional-use information on this site is for awareness and is not medical advice. Claims about air purification and health benefits are being studied, and Shubharambh shares them as "research in progress" until ICAR-NISA scientists publish findings. Prices are indicative samples based on 2026 Indian market research.</p>' +
-      '<div class="foot-bottom"><span>© 2026 Shubharambh · Sample HTML prototype, not a production store</span><span>Made in India · Supports Indian MSMEs &amp; farmers</span></div>' +
+      '<p class="disclaimer">' + SR.t("foot.disclaimer") + "</p>" +
+      '<div class="foot-bottom"><span>' + SR.t("foot.copy") + "</span><span>" + SR.t("foot.madeIn") + "</span></div>" +
       "</div></footer>" +
-      '<div class="toast" role="status" aria-live="polite"></div>';
+      '<div class="toast" role="status" aria-live="polite" data-noi18n></div>';
   }
 
   function bindSearch(form) {
@@ -328,11 +418,11 @@
       var q = input.value.trim();
       if (q.length < 2) return close();
       var res = SR.search(q).slice(0, 6);
-      if (!res.length) { box.innerHTML = '<a href="products.html?q=' + encodeURIComponent(q) + '" class="s-all">No direct match. Search all for “' + SR.esc(q) + '”</a>'; box.classList.remove("hidden"); return; }
+      if (!res.length) { box.innerHTML = '<a href="products.html?q=' + encodeURIComponent(q) + '" class="s-all">' + SR.t("search.noMatch", { q: SR.esc(q) }) + "</a>"; box.classList.remove("hidden"); return; }
       box.innerHTML = res.map(function (r) {
         var p = r.p, c = SR.catByKey[p.cat] || {};
         return '<a href="product.html?id=' + p.id + '" role="option"><img src="' + SR.esc(SR.cover(p)) + '" alt="" loading="lazy"><span><span class="s-name">' + SR.highlight(p.name, q) + '</span><br><span class="s-meta">' + SR.esc(c.name || "") + " · " + SR.fmt(p.variants[p.defaultVariant || 0].price) + "</span></span></a>";
-      }).join("") + '<a class="s-all" href="products.html?q=' + encodeURIComponent(q) + '">See all results for “' + SR.esc(q) + "”</a>";
+      }).join("") + '<a class="s-all" href="products.html?q=' + encodeURIComponent(q) + '">' + SR.t("search.all", { q: SR.esc(q) }) + "</a>";
       box.classList.remove("hidden");
     }
     input.addEventListener("input", render);
@@ -361,13 +451,57 @@
     SR._tt = setTimeout(function () { t.classList.remove("show"); }, 3200);
   };
 
+  /* ---------------- Static page translation ----------------
+     Static HTML stays in English. In Hindi mode every "text block" (the outermost
+     element that directly contains English text) is looked up by a hash of its
+     text in window.SR_HI_STATIC and replaced with the Hindi HTML. */
+  SR.hash = function (s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  };
+  function normText(s) { return String(s || "").replace(/\s+/g, " ").trim(); }
+  var SKIP = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEMPLATE: 1, svg: 1, SVG: 1 };
+  function hasDirectText(el) {
+    for (var n = el.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && /[A-Za-z]/.test(n.nodeValue)) return true;
+    return false;
+  }
+  function collectBlocks(root, out) {
+    for (var c = root.firstElementChild; c; c = c.nextElementSibling) {
+      if (SKIP[c.tagName] || c.hasAttribute("data-noi18n")) continue;
+      if (hasDirectText(c)) out.push(c); else collectBlocks(c, out);
+    }
+    return out;
+  }
+  SR.i18nCollect = function () {
+    var out = collectBlocks(document.body, []).map(function (el) {
+      return { text: normText(el.textContent), html: el.innerHTML.replace(/\s+/g, " ").trim(), flag: el.querySelector("svg,input,select,textarea,img") ? "has-controls" : "" };
+    });
+    SR.$$("[placeholder]").forEach(function (el) { if (!el.closest("[data-noi18n]")) out.push({ text: el.getAttribute("placeholder"), html: "", flag: "placeholder" }); });
+    out.push({ text: document.title, html: "", flag: "title" });
+    return out;
+  };
+  SR.translateStatic = function (root) {
+    if (!SR.isHi) return;
+    var D = window.SR_HI_STATIC || {};
+    collectBlocks(root || document.body, []).forEach(function (el) {
+      var v = D[SR.hash(normText(el.textContent))];
+      if (v != null) el.innerHTML = v; else SR._missing["static:" + normText(el.textContent).slice(0, 60)] = 1;
+    });
+    SR.$$("[placeholder]", root).forEach(function (el) {
+      var v = D[SR.hash(el.getAttribute("placeholder"))];
+      if (v != null) el.setAttribute("placeholder", v);
+    });
+    if (!root) { var tv = D[SR.hash(normText(document.title))]; if (tv) document.title = tv; }
+  };
+
   /* ---------------- Product card ---------------- */
   SR.card = function (p, q) {
     var c = SR.catByKey[p.cat] || {}, v = p.variants[p.defaultVariant || 0], imgs = SR.imgs(p), off = SR.off(v.price, v.mrp);
     var tags = "";
-    if (p.type === "organic") tags += p.nisa && p.nisa.status === "live" ? '<span class="badge badge-green">ICAR-NISA tested*</span>' : '<span class="badge">Organic</span>';
-    else tags += '<span class="badge badge-blue">Handmade</span>';
-    if (p.craft && p.craft.gi) tags += '<span class="badge badge-maroon">GI craft</span>';
+    if (p.type === "organic") tags += p.nisa && p.nisa.status === "live" ? '<span class="badge badge-green">' + SR.t("badge.nisaTested") + "</span>" : '<span class="badge">' + SR.t("badge.organic") + "</span>";
+    else tags += '<span class="badge badge-blue">' + SR.t("badge.handmade") + "</span>";
+    if (p.craft && p.craft.gi) tags += '<span class="badge badge-maroon">' + SR.t("badge.gi") + "</span>";
     return '<article class="p-card">' +
       '<a class="p-img" href="product.html?id=' + p.id + '" aria-label="' + SR.esc(p.name) + '">' +
       '<img src="' + SR.esc(imgs[0].src) + '" alt="' + SR.esc(p.name) + '" loading="lazy">' +
@@ -375,11 +509,11 @@
       '<span class="p-tags">' + tags + "</span></a>" +
       '<div class="p-body"><span class="p-cat">' + SR.esc(c.name || "") + "</span>" +
       '<a class="p-name" href="product.html?id=' + p.id + '">' + (q ? SR.highlight(p.name, q) : SR.esc(p.name)) + "</a>" +
-      (p.hi ? '<span class="p-hi">' + SR.esc(p.hi) + "</span>" : "") +
+      (p.alt && p.alt !== p.name ? '<span class="p-hi"' + (SR.isHi ? ' lang="en"' : ' lang="hi"') + ">" + SR.esc(p.alt) + "</span>" : "") +
       '<p class="p-short">' + SR.esc(p.short) + "</p>" +
-      '<div class="p-foot"><div class="price">' + SR.fmt(v.price) + (off ? '<span class="mrp">' + SR.fmt(v.mrp) + '</span><span class="off">' + off + "% off</span>" : "") +
-      '<span class="price-unit">' + SR.esc(v.label) + (p.variants.length > 1 ? " · " + p.variants.length + " options" : "") + "</span></div>" +
-      '<button class="add-mini" data-add="' + p.id + '" aria-label="Add ' + SR.esc(p.name) + ' to cart" title="Add to cart">' + I.plus + "</button></div>" +
+      '<div class="p-foot"><div class="price">' + SR.fmt(v.price) + (off ? '<span class="mrp">' + SR.fmt(v.mrp) + '</span><span class="off">' + SR.t("price.off", { n: off }) + "</span>" : "") +
+      '<span class="price-unit">' + SR.esc(v.label) + (p.variants.length > 1 ? " · " + SR.t("card.options", { n: p.variants.length }) : "") + "</span></div>" +
+      '<button class="add-mini" data-add="' + p.id + '" aria-label="' + SR.esc(SR.t("card.addAria", { name: p.name })) + '" title="' + SR.t("card.add") + '">' + I.plus + "</button></div>" +
       "</div></article>";
   };
 
@@ -390,6 +524,8 @@
     var h = SR.$("#site-header"), f = SR.$("#site-footer");
     if (h) h.outerHTML = headerHTML(activeNav);
     if (f) f.outerHTML = footerHTML();
+    SR.translateStatic();
+    document.documentElement.classList.remove("i18n-wait");
     SR.$$(".header-search").forEach(bindSearch);
     var mt = SR.$(".menu-toggle"), mn = SR.$(".mobile-nav");
     if (mt) mt.addEventListener("click", function () {
@@ -398,6 +534,8 @@
     document.addEventListener("click", function (e) {
       var b = e.target.closest("[data-add]");
       if (b) { e.preventDefault(); var ap = SR.byId[b.getAttribute("data-add")]; SR.cart.add(ap.id, ap.defaultVariant || 0, 1); }
+      var lb = e.target.closest("[data-lang]");
+      if (lb && lb.closest(".lang-switch")) { e.preventDefault(); if (lb.dataset.lang !== SR.lang) SR.setLang(lb.dataset.lang); }
     });
     SR.cart.emit();
     // reveal on scroll
@@ -410,6 +548,12 @@
     SR.ready = true;
     (SR._q || []).forEach(function (fn) { fn(); });
     SR._q = [];
+    // restore scroll position after a language switch
+    try {
+      var sc = JSON.parse(sessionStorage.getItem("sr_scroll") || "null");
+      sessionStorage.removeItem("sr_scroll");
+      if (sc && sc.p === location.pathname) window.scrollTo({ top: sc.y, left: 0, behavior: "instant" });
+    } catch (e) { /* ignore */ }
   }
   SR.onReady = function (fn) { if (SR.ready) fn(); else (SR._q = SR._q || []).push(fn); };
   SR.observeReveal = function (root) {

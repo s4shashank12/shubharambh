@@ -149,6 +149,24 @@ p { margin: 0 0 1em; }
 .menu-toggle { display: none; }
 .mobile-nav { display: none; }
 
+/* ---------- Language switch ---------- */
+.lang-switch {
+  display: inline-flex; padding: 3px; border-radius: 999px; background: #fff; border: 1px solid var(--line); flex-shrink: 0;
+}
+.lang-switch button {
+  border: 0; background: transparent; min-width: 38px; height: 32px; padding: 0 10px; border-radius: 999px; cursor: pointer;
+  font: 600 .84rem/1 var(--font-body); color: var(--ink-soft);
+}
+.lang-switch button[lang="hi"] { font-size: .95rem; }
+.lang-switch button:hover { color: var(--maroon); }
+.lang-switch button[aria-pressed="true"] { background: var(--maroon); color: #fff; cursor: default; }
+.lang-switch button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 1px; }
+.lang-switch.dark { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); }
+.lang-switch.dark button { color: #e8d6c0; }
+.lang-switch.dark button[aria-pressed="true"] { background: var(--haldi); color: var(--maroon-dark); }
+.mobile-lang { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 4px 2px; font-weight: 500; }
+.foot-lang { display: flex; align-items: center; gap: 12px; margin-top: 16px; font-size: .88rem; color: #cdb79c; }
+
 /* ---------- Hero ---------- */
 .hero {
   position: relative; color: #fff; overflow: hidden;
@@ -560,6 +578,7 @@ mark { background: var(--haldi-soft); color: inherit; padding: 0 2px; border-rad
   .main-nav, .header-search { display: none; }
   .menu-toggle { display: grid; }
   .header-icons { margin-left: auto; }
+  .mobile-nav .lang-switch { display: inline-flex; }
   .mobile-nav.open { display: block; border-top: 1px solid var(--line); background: var(--paper); padding: 12px 20px 18px; }
   .mobile-nav a { display: block; padding: 10px 4px; text-decoration: none; color: var(--ink); font-weight: 500; border-bottom: 1px solid var(--line); }
   .mobile-nav .header-search { display: block; max-width: none; margin: 0 0 8px; }
@@ -579,6 +598,9 @@ mark { background: var(--haldi-soft); color: inherit; padding: 0 2px; border-rad
 }
 @media (max-width: 640px) {
   body { font-size: 16px; }
+  .header-icons { gap: 2px; }
+  .header-icons > .lang-switch button { min-width: 32px; height: 30px; padding: 0 7px; }
+  .orders-icon { display: none; }
   .wrap { padding: 0 16px; }
   section.block { padding: 52px 0; }
   .hero .wrap { padding-top: 56px; padding-bottom: 64px; }
@@ -608,3 +630,27 @@ mark { background: var(--haldi-soft); color: inherit; padding: 0 2px; border-rad
   .success-box { padding: 26px 18px; }
   .mandala { width: 380px; height: 380px; right: -160px; }
 }
+
+/* ---------- Hindi (हिन्दी) mode ---------- */
+/* Until app.js swaps the static text in, keep the English body hidden (the head script removes this after 2.5s anyway). */
+html.i18n-wait main, html.i18n-wait .page-head, html.i18n-wait section { visibility: hidden; }
+/* Playfair Display has no Devanagari, so headings switch to Tiro Devanagari Hindi and other display text to Mukta. */
+html.lang-hi { --font-display: "Mukta", "Segoe UI", system-ui, sans-serif; }
+html.lang-hi body { line-height: 1.7; }
+html.lang-hi h1, html.lang-hi h2, html.lang-hi .stat b, html.lang-hi .cat-tile .cat-label b {
+  font-family: "Tiro Devanagari Hindi", "Mukta", serif; font-weight: 400; line-height: 1.35;
+}
+html.lang-hi h3, html.lang-hi h4 { line-height: 1.35; }
+html.lang-hi h3 { font-weight: 700; }
+/* Letter-spacing breaks Devanagari conjuncts, and uppercase means nothing in Hindi. */
+html.lang-hi .badge, html.lang-hi .eyebrow, html.lang-hi .p-card .p-cat, html.lang-hi .filters h4,
+html.lang-hi .site-footer h4, html.lang-hi .status-pill {
+  letter-spacing: 0; text-transform: none;
+}
+html.lang-hi .eyebrow { font-size: .9rem; }
+html.lang-hi .badge { font-size: .8rem; }
+html.lang-hi .p-card .p-cat { font-size: .82rem; }
+html.lang-hi .filters h4, html.lang-hi .site-footer h4 { font-size: .92rem; }
+/* The secondary (English) name under a Hindi product name. */
+html.lang-hi .p-card .p-hi, html.lang-hi .pd-hi { font-family: var(--font-body); font-style: italic; }
+html.lang-hi .cert::before { content: "नमूना"; letter-spacing: 0; font-size: .8rem; }

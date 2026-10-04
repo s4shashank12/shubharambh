@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>try{if(/[?&]lang=hi/.test(location.search)||(!/[?&]lang=en/.test(location.search)&&JSON.parse(localStorage.getItem("sr_lang")||'"en"')==="hi")){document.documentElement.className+=" lang-hi i18n-wait";document.documentElement.lang="hi";setTimeout(function(){document.documentElement.classList.remove("i18n-wait")},2500)}}catch(e){}</script>
   <title>Purity &amp; ICAR-NISA | Shubharambh</title>
   <meta name="description" content="How Shubharambh products are tested for purity by ICAR-NISA: honey pollen analysis and NMR, camphor optical rotation, guggul HPLC, ghee RM/BR values, roli and haldi dye screening, plus home checks.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,11 +61,11 @@
       <div class="wrap">
         <div class="section-head reveal"><span class="eyebrow">Paperless proof</span><h2>From batch to QR code</h2><p>Printing every batch report would be bulky and waste paper. Each report goes on ICAR-NISA’s official website instead, and a report on a government site is more credible than one we print ourselves.</p></div>
         <div class="qr-flow reveal">
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19 13 11"/></svg><b>1. Source</b>Farm, forest, apiary or gaushala lot</div>
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/></svg><b>2. Sample</b>Batch sample sealed &amp; sent to Ranchi</div>
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3 4.5 6v6c0 4.5 3.2 8 7.5 9 4.3-1 7.5-4.5 7.5-9V6L12 3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>3. Test</b>Identity &amp; purity tests for that product</div>
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><b>4. Publish</b>Report posted on ICAR-NISA’s website</div>
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg><b>5. Scan</b>QR on your pack opens the report</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19 13 11"/></svg><b>1. Source</b><span>Farm, forest, apiary or gaushala lot</span></div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/></svg><b>2. Sample</b><span>Batch sample sealed &amp; sent to Ranchi</span></div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3 4.5 6v6c0 4.5 3.2 8 7.5 9 4.3-1 7.5-4.5 7.5-9V6L12 3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>3. Test</b><span>Identity &amp; purity tests for that product</span></div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><b>4. Publish</b><span>Report posted on ICAR-NISA’s website</span></div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg><b>5. Scan</b><span>QR on your pack opens the report</span></div>
         </div>
         <p class="small muted center" style="margin-top:14px">Status today: <b>honey reports are live</b>; certification for other categories is in progress. Certificates on this sample website are placeholders.</p>
       </div>
@@ -150,9 +151,13 @@
   </main>
   <div id="site-footer"></div>
   <script src="assets/js/data-organic.js"></script>
+  <script src="assets/js/data-organic.hi.js"></script>
   <script src="assets/js/data-honey.js"></script>
   <script src="assets/js/data-crafts.js"></script>
+  <script src="assets/js/data-crafts.hi.js"></script>
   <script src="assets/js/images.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/i18n-static.js"></script>
   <script src="assets/js/app.js"></script>
   <script>
     SR.onReady(function () {

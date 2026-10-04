@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>try{if(/[?&]lang=hi/.test(location.search)||(!/[?&]lang=en/.test(location.search)&&JSON.parse(localStorage.getItem("sr_lang")||'"en"')==="hi")){document.documentElement.className+=" lang-hi i18n-wait";document.documentElement.lang="hi";setTimeout(function(){document.documentElement.classList.remove("i18n-wait")},2500)}}catch(e){}</script>
   <title>Image Credits | Shubharambh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,9 +32,13 @@
   </main>
   <div id="site-footer"></div>
   <script src="assets/js/data-organic.js"></script>
+  <script src="assets/js/data-organic.hi.js"></script>
   <script src="assets/js/data-honey.js"></script>
   <script src="assets/js/data-crafts.js"></script>
+  <script src="assets/js/data-crafts.hi.js"></script>
   <script src="assets/js/images.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/i18n-static.js"></script>
   <script src="assets/js/app.js"></script>
   <script>
     SR.onReady(function () {
@@ -42,9 +47,9 @@
         q = (q || "").toLowerCase();
         var list = all.filter(function (c) { return !q || (c.title + " " + c.author + " " + c.license + " " + c.via).toLowerCase().indexOf(q) > -1; });
         SR.$("#credits").innerHTML = list.map(function (c) {
-          return '<div class="credit"><img src="' + SR.esc(c.src) + '" alt="" loading="lazy"><div><b>' + SR.esc(c.title || "Untitled") + "</b>" + SR.esc(c.author || "Unknown") + "<br>" + SR.esc(c.license || "") + " · " + SR.esc(c.via || "") + (c.url ? '<br><a href="' + SR.esc(c.url) + '" target="_blank" rel="noopener">Source</a>' : "") + "</div></div>";
+          return '<div class="credit"><img src="' + SR.esc(c.src) + '" alt="" loading="lazy"><div><b>' + SR.esc(c.title || SR.t("credits.untitled")) + "</b>" + SR.esc(c.author || SR.t("img.unknown")) + "<br>" + SR.esc(c.license || "") + " · " + SR.esc(c.via || "") + (c.url ? '<br><a href="' + SR.esc(c.url) + '" target="_blank" rel="noopener">' + SR.t("img.source") + "</a>" : "") + "</div></div>";
         }).join("");
-        SR.$("#cc").textContent = list.length + " of " + all.length + " images";
+        SR.$("#cc").textContent = SR.t("credits.count", { n: list.length, total: all.length });
       }
       SR.$("#cf").addEventListener("input", function (e) { render(e.target.value); });
       render("");
