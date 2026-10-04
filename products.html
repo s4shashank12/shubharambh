@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop | Shubharambh</title>
+  <meta name="description" content="Search and shop Shubharambh's organic products (kapoor, dhoop, resins, honey, gums, salts, ghee) and Indian handicrafts (minakari, marble, wood, glass, terracotta, iron, ceramic, bamboo).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" href="assets/img/brand/favicon.svg" type="image/svg+xml">
+</head>
+<body data-page="shop">
+  <div id="site-header"></div>
+
+  <main id="main">
+    <section class="page-head">
+      <div class="wrap">
+        <div class="crumbs"><a href="index.html">Home</a> / <span id="crumb-type">Shop</span></div>
+        <h1 id="shop-title">All products</h1>
+        <p class="muted" id="shop-sub" style="margin:0">Organic products from Indian farms and forests, tested with ICAR-NISA, and handicrafts from Indian MSMEs.</p>
+      </div>
+    </section>
+
+    <div class="wrap shop-layout">
+      <aside class="filters" id="filters" aria-label="Filters">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="margin:0">Filters</h4>
+          <button class="link-btn" id="clear-all" type="button" style="color:var(--maroon)">Clear all</button>
+        </div>
+        <h4>Range</h4>
+        <div class="seg" id="type-seg" role="group" aria-label="Product range">
+          <button type="button" data-type="all">All</button>
+          <button type="button" data-type="organic">Organic</button>
+          <button type="button" data-type="handicraft">Handicrafts</button>
+        </div>
+        <h4>Category</h4>
+        <ul class="filter-list" id="cat-list"></ul>
+        <h4>Price (₹)</h4>
+        <div class="range-row">
+          <label class="sr-only" for="min-price">Minimum price</label>
+          <input id="min-price" type="number" inputmode="numeric" min="0" placeholder="Min">
+          <span>–</span>
+          <label class="sr-only" for="max-price">Maximum price</label>
+          <input id="max-price" type="number" inputmode="numeric" min="0" placeholder="Max">
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px" id="price-chips">
+          <button class="chip" type="button" data-max="200">Under ₹200</button>
+          <button class="chip" type="button" data-max="500">Under ₹500</button>
+          <button class="chip" type="button" data-min="500" data-max="1500">₹500–1,500</button>
+          <button class="chip" type="button" data-min="1500">₹1,500+</button>
+        </div>
+        <h4>Assurance</h4>
+        <ul class="filter-list">
+          <li><label><input type="checkbox" id="f-live"> ICAR-NISA certified (live)</label></li>
+          <li><label><input type="checkbox" id="f-gi"> GI-registered craft</label></li>
+          <li><label><input type="checkbox" id="f-sale"> On offer (below MRP)</label></li>
+        </ul>
+        <div id="state-wrap">
+          <h4>Craft state</h4>
+          <ul class="filter-list" id="state-list"></ul>
+        </div>
+        <button class="btn btn-maroon btn-block filter-toggle" type="button" id="close-filters" style="margin-top:16px">Show results</button>
+      </aside>
+
+      <section aria-label="Products">
+        <div class="shop-toolbar">
+          <div class="shop-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <label class="sr-only" for="q">Search products</label>
+            <input id="q" type="search" placeholder="Search by name, Hindi name, flower, state, use… e.g. ‘camphor’, ‘शहद’, ‘wedding gift’" autocomplete="off">
+          </div>
+          <button class="btn btn-ghost btn-sm filter-toggle" type="button" id="open-filters">Filters</button>
+          <label class="sr-only" for="sort">Sort by</label>
+          <select id="sort" class="sort">
+            <option value="relevance">Sort: Relevance</option>
+            <option value="price-asc">Price: Low to high</option>
+            <option value="price-desc">Price: High to low</option>
+            <option value="discount">Biggest discount</option>
+            <option value="name">Name: A–Z</option>
+          </select>
+        </div>
+        <div class="active-filters" id="active-filters"></div>
+        <div class="result-meta" id="result-meta" aria-live="polite"></div>
+        <div class="products-grid" id="grid"></div>
+        <div class="empty-state hidden" id="empty">
+          <h3>No products match</h3>
+          <p class="muted">Try a different spelling or fewer filters. You can search in English or Hindi: <i>kapoor</i>, <i>camphor</i>, <i>कपूर</i>, <i>honey</i>, <i>शहद</i>, <i>bangles</i>, <i>Rajasthan</i>, <i>gift</i>.</p>
+          <div id="empty-sugg" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/data-organic.js"></script>
+  <script src="assets/js/data-honey.js"></script>
+  <script src="assets/js/data-crafts.js"></script>
+  <script src="assets/js/images.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/pages/shop.js"></script>
+</body>
+</html>

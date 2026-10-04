@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout | Shubharambh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" href="assets/img/brand/favicon.svg" type="image/svg+xml">
+</head>
+<body data-page="checkout">
+  <div id="site-header"></div>
+  <main id="main">
+    <section class="page-head">
+      <div class="wrap">
+        <div class="crumbs"><a href="index.html">Home</a> / <a href="cart.html">Cart</a> / Checkout</div>
+        <h1>Checkout</h1>
+        <p class="muted" style="margin:0">This is a <b>sample checkout</b>: no money is charged and no real order is created. Please don’t enter real card details.</p>
+      </div>
+    </section>
+
+    <div class="wrap cart-layout" id="co-root">
+      <form id="co-form" novalidate>
+        <div class="form-card">
+          <h3><span class="num">1</span>Contact</h3>
+          <div class="form-grid">
+            <div class="field"><label for="name">Full name *</label><input id="name" name="name" autocomplete="name" required><span class="err"></span></div>
+            <div class="field"><label for="phone">Mobile number *</label><input id="phone" name="phone" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile" maxlength="10" required><span class="err"></span></div>
+            <div class="field full"><label for="email">Email (for order updates)</label><input id="email" name="email" type="email" autocomplete="email"><span class="err"></span></div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h3><span class="num">2</span>Delivery address</h3>
+          <div class="form-grid">
+            <div class="field full"><label for="addr1">House / flat, building, street *</label><input id="addr1" name="addr1" autocomplete="address-line1" required><span class="err"></span></div>
+            <div class="field full"><label for="addr2">Area, landmark</label><input id="addr2" name="addr2" autocomplete="address-line2"><span class="err"></span></div>
+            <div class="field"><label for="city">City *</label><input id="city" name="city" autocomplete="address-level2" required><span class="err"></span></div>
+            <div class="field"><label for="state">State / UT *</label><select id="state" name="state" required><option value="">Select…</option></select><span class="err"></span></div>
+            <div class="field"><label for="pin">PIN code *</label><input id="pin" name="pin" inputmode="numeric" maxlength="6" autocomplete="postal-code" required><span class="err"></span></div>
+            <div class="field"><label for="delivery">Delivery speed</label><select id="delivery" name="delivery"><option value="standard">Standard (4–7 days)</option><option value="express">Express (2–3 days) +₹99</option></select><span class="err"></span></div>
+          </div>
+          <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;cursor:pointer"><input type="checkbox" id="gift" style="margin-top:5px;accent-color:var(--saffron)"> <span><b>Gift wrap this order</b> (+₹49): handmade paper wrap with a printed shagun card. Ideal for weddings, griha pravesh and corporate gifts.</span></label>
+          <div class="field full hidden" id="gift-msg-wrap" style="margin-top:10px"><label for="gift-msg">Gift message</label><textarea id="gift-msg" maxlength="200" placeholder="Shubh griha pravesh! With love…"></textarea></div>
+        </div>
+
+        <div class="form-card">
+          <h3><span class="num">3</span>Payment</h3>
+          <div class="pay-opts">
+            <label class="pay-opt"><input type="radio" name="pay" value="upi" checked><div><b>UPI</b><span>Google Pay, PhonePe, Paytm, BHIM (simulated)</span><div class="pay-extra" data-for="upi"><div class="field"><label for="upi">UPI ID *</label><input id="upi" placeholder="yourname@bank"><span class="err"></span></div></div></div></label>
+            <label class="pay-opt"><input type="radio" name="pay" value="card"><div><b>Debit / credit card</b><span>Simulated. Use test card 4111 1111 1111 1111.</span><div class="pay-extra hidden" data-for="card"><div class="form-grid"><div class="field full"><label for="cardno">Card number *</label><input id="cardno" inputmode="numeric" placeholder="4111 1111 1111 1111" maxlength="19"><span class="err"></span></div><div class="field"><label for="exp">Expiry (MM/YY) *</label><input id="exp" placeholder="12/29" maxlength="5"><span class="err"></span></div><div class="field"><label for="cvv">CVV *</label><input id="cvv" inputmode="numeric" maxlength="4" placeholder="123"><span class="err"></span></div></div></div></div></label>
+            <label class="pay-opt"><input type="radio" name="pay" value="netbanking"><div><b>Net banking</b><span>All major Indian banks (simulated)</span><div class="pay-extra hidden" data-for="netbanking"><div class="field"><label for="bank">Bank *</label><select id="bank"><option value="">Select bank…</option><option>State Bank of India</option><option>HDFC Bank</option><option>ICICI Bank</option><option>Axis Bank</option><option>Bank of Baroda</option><option>Punjab National Bank</option><option>Kotak Mahindra Bank</option></select><span class="err"></span></div></div></div></label>
+            <label class="pay-opt"><input type="radio" name="pay" value="cod"><div><b>Cash on delivery</b><span>Pay when your order arrives (+₹40 handling)</span></div></label>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" id="place" style="height:54px;font-size:1.05rem">Place order</button>
+        <p class="small muted center" style="margin-top:10px">By placing this sample order you agree that nothing will actually be shipped.</p>
+      </form>
+      <aside class="summary" id="co-summary"></aside>
+    </div>
+  </main>
+  <div id="site-footer"></div>
+  <script src="assets/js/data-organic.js"></script>
+  <script src="assets/js/data-honey.js"></script>
+  <script src="assets/js/data-crafts.js"></script>
+  <script src="assets/js/images.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/pages/checkout.js"></script>
+</body>
+</html>
